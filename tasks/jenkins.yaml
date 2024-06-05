@@ -29,16 +29,12 @@
   shell: java -jar /tmp/jenkins-cli.jar -s {{ jenkins_url }} -auth {{ jenkins_user }}:{{ jenkins_password }} install-plugin {{ item }}
   with_items:
     - git
+    - ansible-tower
+    - ansicolor
+    - ant
+    - artifactory
   register: install_plugins
 
 - name: Restart Jenkins
   shell: java -jar /tmp/jenkins-cli.jar -s {{ jenkins_url }} -auth {{ jenkins_user }}:{{ jenkins_password }} safe-restart
   when: install_plugins.changed
-
-- name: Upload JCasC Configuration
-  copy:
-    src: jenkins_casc_config.yml
-    dest: /var/jenkins_home/casc_configs/jenkins.yml
-
-- name: Apply JCasC Configuration
-  shell: java -jar /tmp/jenkins-cli.jar -s {{ jenkins_url }} -auth {{ jenkins_user }}:{{ jenkins_password }} groovy = < /var/jenkins_home/casc_configs/jenkins.yml
