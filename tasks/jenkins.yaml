@@ -1,0 +1,24 @@
+
+- name: Download Jenkins CLI jar
+  get_url:
+    url: http://{{ jenkins_url }}/jnlpJars/jenkins-cli.jar
+    dest: /tmp/jenkins-cli.jar
+    
+- name: Install Jenkins Plugins
+  shell: java -jar /tmp/jenkins-cli.jar -s http://{{ jenkins_url }} install-plugin {{ item }}
+  with_items:
+    - git
+    - aws-secrets-manager-credentials
+  register: install_plugins
+
+- name: Restart Jenkins
+  shell: java -jar /tmp/jenkins-cli.jar -s http://{{ jenkins_url }} safe-restart
+  when: install_plugins.changed
+
+- name: Upload JCasC Configuration
+  copy:
+    src: jenkins_casc_config.yml
+    dest: /var/jenkins_home/casc_configs/jenkins.yml
+
+- name: Apply JCasC Configuration
+  shell: java -jar /tmp/jenkins-cli.jar -s http://{{ jenkins_url }} groovy = < /var/jenkins_home/casc_configs/jenkins.yml
