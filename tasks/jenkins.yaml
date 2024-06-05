@@ -1,12 +1,20 @@
+- name: Fetch IMDSv2 Token
+  shell: curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"
+  register: imds_token
+  changed_when: false
+
 - name: Get Public IP
   uri:
     url: http://169.254.169.254/latest/meta-data/public-ipv4
+    headers:
+      X-aws-ec2-metadata-token: "{{ imds_token.stdout }}"
     return_content: yes
   register: public_ip_result
 
 - name: Set Jenkins URL
   set_fact:
     jenkins_url: "http://{{ public_ip_result.content }}:8080"
+
 - name: Download Jenkins CLI jar
   get_url:
     url: http://{{ jenkins_url }}/jnlpJars/jenkins-cli.jar
