@@ -4,31 +4,32 @@
   changed_when: false
 
 - name: Get Public IP
-  uri:
-    url: http://169.254.169.254/latest/meta-data/public-ipv4
-    headers:
-      X-aws-ec2-metadata-token: "{{ imds_token.stdout }}"
-    return_content: yes
-  register: public_ip_result
+  shell: curl -s -H "X-aws-ec2-metadata-token: {{ imds_token.stdout }}" http://169.254.169.254/latest/meta-data/public-ipv4
+  register: public_ip
+  changed_when: false
 
 - name: Set Jenkins URL
   set_fact:
-    jenkins_url: "http://{{ public_ip_result.content }}:8080"
+    jenkins_url: "http://{{ public_ip.stdout }}:8080"
+
+- name: Debug Jenkins URL
+  debug:
+    msg: "Jenkins URL is {{ jenkins_url }}"
 
 - name: Download Jenkins CLI jar
   get_url:
-    url: http://{{ jenkins_url }}/jnlpJars/jenkins-cli.jar
+    url: "{{ jenkins_url }}/jnlpJars/jenkins-cli.jar"
     dest: /tmp/jenkins-cli.jar
-    
+
 - name: Install Jenkins Plugins
-  shell: java -jar /tmp/jenkins-cli.jar -s http://{{ jenkins_url }} install-plugin {{ item }}
+  shell: java -jar /tmp/jenkins-cli.jar -s {{ jenkins_url }} install-plugin {{ item }}
   with_items:
     - git
     - aws-secrets-manager-credentials
   register: install_plugins
 
 - name: Restart Jenkins
-  shell: java -jar /tmp/jenkins-cli.jar -s http://{{ jenkins_url }} safe-restart
+  shell: java -jar /tmp/jenkins-cli.jar -s {{ jenkins_url }} safe-restart
   when: install_plugins.changed
 
 - name: Upload JCasC Configuration
@@ -37,4 +38,4 @@
     dest: /var/jenkins_home/casc_configs/jenkins.yml
 
 - name: Apply JCasC Configuration
-  shell: java -jar /tmp/jenkins-cli.jar -s http://{{ jenkins_url }} groovy = < /var/jenkins_home/casc_configs/jenkins.yml
+  shell: java -jar /tmp/jenkins-cli.jar -s {{ jenkins_url }} groovy = < /var/jenkins_home/casc_configs/jenkins.yml
