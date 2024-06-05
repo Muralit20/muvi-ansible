@@ -2,6 +2,9 @@
 - hosts: localhost
   connection: local
   become: yes
+  vars:
+    jenkins_user: "{{ lookup('env', 'JENKINS_USER') }}"
+    jenkins_password: "{{ lookup('env', 'JENKINS_PASSWORD') }}"
   tasks:
     - name: Jenkins-plugins
       include_tasks: tasks/jenkins.yaml

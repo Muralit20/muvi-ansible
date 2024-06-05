@@ -1,11 +1,14 @@
----
 - name: Fetch IMDSv2 Token
-  shell: curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"
+  shell: |
+    curl -X PUT "http://169.254.169.254/latest/api/token" \
+    -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"
   register: imds_token
   changed_when: false
 
 - name: Get Public IP
-  shell: curl -s -H "X-aws-ec2-metadata-token: {{ imds_token.stdout }}" http://169.254.169.254/latest/meta-data/public-ipv4
+  shell: |
+    curl -s -H "X-aws-ec2-metadata-token: {{ imds_token.stdout }}" \
+    http://169.254.169.254/latest/meta-data/public-ipv4
   register: public_ip
   changed_when: false
 
@@ -23,14 +26,13 @@
     dest: /tmp/jenkins-cli.jar
 
 - name: Install Jenkins Plugins
-  shell: java -jar /tmp/jenkins-cli.jar -s {{ jenkins_url }} install-plugin {{ item }}
+  shell: java -jar /tmp/jenkins-cli.jar -s {{ jenkins_url }} -auth {{ jenkins_user }}:{{ jenkins_password }} install-plugin {{ item }}
   with_items:
     - git
-    - aws-secrets-manager-credentials
   register: install_plugins
 
 - name: Restart Jenkins
-  shell: java -jar /tmp/jenkins-cli.jar -s {{ jenkins_url }} safe-restart
+  shell: java -jar /tmp/jenkins-cli.jar -s {{ jenkins_url }} -auth {{ jenkins_user }}:{{ jenkins_password }} safe-restart
   when: install_plugins.changed
 
 - name: Upload JCasC Configuration
@@ -39,5 +41,4 @@
     dest: /var/jenkins_home/casc_configs/jenkins.yml
 
 - name: Apply JCasC Configuration
-  shell: java -jar /tmp/jenkins-cli.jar -s {{ jenkins_url }} groovy = < /var/jenkins_home/casc_configs/jenkins.yml
-
+  shell: java -jar /tmp/jenkins-cli.jar -s {{ jenkins_url }} -auth {{ jenkins_user }}:{{ jenkins_password }} groovy = < /var/jenkins_home/casc_configs/jenkins.yml
