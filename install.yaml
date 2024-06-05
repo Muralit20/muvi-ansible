@@ -2,8 +2,6 @@
 - hosts: localhost
   connection: local
   become: yes
-  vars:
-    jenkins_url: "http://your-jenkins-url:8080"
   tasks:
     - name: Jenkins-plugins
       include_tasks: tasks/jenkins.yaml
