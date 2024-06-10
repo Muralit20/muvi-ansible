@@ -22,33 +22,33 @@
 
 - name: Copy SSL certificate file
   ansible.builtin.copy:
-    src: /files/certs/jenkins.jks
+    src: files/certs/jenkins.jks
     dest: /var/lib/jenkins/ssl/
 
 - name: Copy Jenkins.yaml configuration file
   ansible.builtin.copy:
-    src: /files/conf/jenkins.yaml
+    src: files/conf/jenkins.yaml
     dest: /var/lib/jenkins/casc_configs/
 
 - name: Copy Jenkins service file
   ansible.builtin.copy:
-    src: /files/conf/jenkins.service
+    src: files/conf/jenkins.service
     dest: /usr/lib/systemd/system/jenkins.service
 
 - name: Copy all SSL certificate files
   ansible.builtin.copy:
-    src: /files/crt/
+    src: files/crt/
     dest: /opt/csvn/data/conf/
     mode: preserve   # optional: to preserve the file modes
 
 - name: Copy CSVN main HTTPD configuration file
   ansible.builtin.copy:
-    src: /files/conf/csvn_main_httpd.conf
+    src: files/conf/csvn_main_httpd.conf
     dest: /opt/csvn/data/conf/
 
 - name: Copy and replace AD password configuration file
   ansible.builtin.copy:
-    src: /files/conf/svn_viewvc_httpd.conf
+    src: files/conf/svn_viewvc_httpd.conf
     dest: /opt/csvn/data/conf/
 
 - name: Retrieve the secret value from AWS Secrets Manager
