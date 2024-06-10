@@ -52,42 +52,44 @@
     dest: /opt/csvn/data/conf/
 
 - name: Retrieve the jenkins secret value from AWS Secrets Manager
-  community.aws.aws_secret:
-    name: "JENKINS_HTTPS_KEYSTORE_PASSWORD-Q2uByW"
+  community.aws.secretsmanager_secret_info:
+    secret_arn: "arn:aws:secretsmanager:us-east-1:182510612431:secret:JENKINS_HTTPS_KEYSTORE_PASSWORD-Q2uByW"
     region: "us-east-1"
-  register: secret_output
+  register: jenkins_secret_output
 
-- name: Debug output of secret_output
+- name: Debug Jenkins secret output
   debug:
-    var: secret_output
+    var: jenkins_secret_output
 
-- name: Ensure secret was retrieved successfully
-  debug:
-    msg: "Secret value is: {{ secret_output.secret_string }}"
+- name: Check if Jenkins secret was retrieved successfully
+  fail:
+    msg: "Failed to retrieve the Jenkins secret"
+  when: jenkins_secret_output.secrets[0].secret_string is not defined
 
 - name: Update Jenkins service file with the secret value
   ansible.builtin.replace:
     path: "/usr/lib/systemd/system/jenkins.service"
     regexp: 'Environment="JENKINS_HTTPS_KEYSTORE_PASSWORD=.*"'
-    replace: 'Environment="JENKINS_HTTPS_KEYSTORE_PASSWORD={{ secret_output.secret_string }}"'
+    replace: 'Environment="JENKINS_HTTPS_KEYSTORE_PASSWORD={{ jenkins_secret_output.secrets[0].secret_string }}"'
   notify: Restart Jenkins
 
 - name: Retrieve the LDAP secret value from AWS Secrets Manager
-  community.aws.aws_secret:
-    name: "AuthLDAPBindPassword-j05QvD"
+  community.aws.secretsmanager_secret_info:
+    secret_arn: "arn:aws:secretsmanager:us-east-1:182510612431:secret:AuthLDAPBindPassword-j05QvD"
     region: "us-east-1"
   register: ldap_secret_output
 
-- name: Debug output of ldap_secret_output
+- name: Debug LDAP secret output
   debug:
     var: ldap_secret_output
 
-- name: Ensure LDAP secret was retrieved successfully
-  debug:
-    msg: "LDAP secret value is: {{ ldap_secret_output.secret_string }}"
+- name: Check if LDAP secret was retrieved successfully
+  fail:
+    msg: "Failed to retrieve the LDAP secret"
+  when: ldap_secret_output.secrets[0].secret_string is not defined
 
 - name: Update SVN ViewVC HTTPD configuration file with the LDAP secret value
   ansible.builtin.replace:
     path: "/opt/csvn/data/conf/svn_viewvc_httpd.conf"
     regexp: 'AuthLDAPBindPassword ".*"'
-    replace: 'AuthLDAPBindPassword "{{ ldap_secret_output.secret_string }}"'
+    replace: 'AuthLDAPBindPassword "{{ ldap_secret_output.secrets[0].secret_string }}"'
