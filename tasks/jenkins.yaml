@@ -58,7 +58,7 @@
 
 - name: Retrieve the jenkins secret value from AWS Secrets Manager
   set_fact:
-    jenkins_secret: "{{ lookup('amazon.aws.aws_secret', 'JENKINS_HTTPS_KEYSTORE_PASSWORD-Q2uByW', region='us-east-1') }}"
+    jenkins_secret: "{{ lookup('amazon.aws.aws_secret', 'JENKINS_HTTPS_KEYSTORE_PASSWORD', region='us-east-1') }}"
 
 - name: Ensure Jenkins secret was retrieved successfully
   fail:
@@ -74,7 +74,7 @@
 
 - name: Retrieve the LDAP secret value from AWS Secrets Manager
   set_fact:
-    ldap_secret: "{{ lookup('amazon.aws.aws_secret', 'AuthLDAPBindPassword-j05QvD', region='us-east-1') }}"
+    ldap_secret: "{{ lookup('amazon.aws.aws_secret', 'AuthLDAPBindPassword', region='us-east-1') }}"
 
 - name: Ensure LDAP secret was retrieved successfully
   fail:
