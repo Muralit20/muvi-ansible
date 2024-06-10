@@ -8,6 +8,12 @@
   tasks:
     - name: Jenkins-plugins
       include_tasks: tasks/jenkins.yaml
+      
+  handlers:
+    - name: Restart Jenkins
+      ansible.builtin.systemd:
+        name: jenkins
+        state: restarted
 
 
 

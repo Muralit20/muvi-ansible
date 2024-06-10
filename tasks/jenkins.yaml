@@ -20,6 +20,70 @@
   debug:
     msg: "Jenkins URL is {{ jenkins_url }}"
 
+- name: Copy SSL certificate file
+  ansible.builtin.copy:
+    src: /files/certs/jenkins.jks
+    dest: /var/lib/jenkins/ssl/
+
+- name: Copy Jenkins.yaml configuration file
+  ansible.builtin.copy:
+    src: /files/conf/jenkins.yaml
+    dest: /var/lib/jenkins/casc_configs/
+
+- name: Copy Jenkins service file
+  ansible.builtin.copy:
+    src: /files/conf/jenkins.service
+    dest: /usr/lib/systemd/system/jenkins.service
+
+- name: Copy all SSL certificate files
+  ansible.builtin.copy:
+    src: /files/crt/
+    dest: /opt/csvn/data/conf/
+    mode: preserve   # optional: to preserve the file modes
+
+- name: Copy CSVN main HTTPD configuration file
+  ansible.builtin.copy:
+    src: /files/conf/csvn_main_httpd.conf
+    dest: /opt/csvn/data/conf/
+
+- name: Copy and replace AD password configuration file
+  ansible.builtin.copy:
+    src: /files/conf/svn_viewvc_httpd.conf
+    dest: /opt/csvn/data/conf/
+
+- name: Retrieve the secret value from AWS Secrets Manager
+  amazon.aws.aws_secret:
+    name: "JENKINS_HTTPS_KEYSTORE_PASSWORD"  # Directly inserting the secret name
+    region: "us-east-1"     # Directly inserting the AWS region
+  register: secret_output
+
+- name: Ensure secret was retrieved successfully
+  debug:
+    msg: "Secret value is: {{ secret_output.secret_string }}"
+
+- name: Update Jenkins service file with the secret value
+  ansible.builtin.replace:
+    path: "/usr/lib/systemd/system/jenkins.service"
+    regexp: 'Environment="JENKINS_HTTPS_KEYSTORE_PASSWORD=.*"'
+    replace: 'Environment="JENKINS_HTTPS_KEYSTORE_PASSWORD={{ secret_output.secret_string }}"'
+  notify: Restart Jenkins
+
+- name: Retrieve the AuthLDAPBindPassword secret value from AWS Secrets Manager
+  amazon.aws.aws_secret:
+    name: "AuthLDAPBindPassword"  # Secret name for AuthLDAPBindPassword
+    region: "us-east-1"           # Directly inserting the AWS region
+  register: ldap_secret_output
+
+- name: Ensure LDAP secret was retrieved successfully
+  debug:
+    msg: "LDAP secret value is: {{ ldap_secret_output.secret_string }}"
+
+- name: Update SVN ViewVC HTTPD configuration file with the LDAP secret value
+  ansible.builtin.replace:
+    path: "/opt/csvn/data/conf/svn_viewvc_httpd.conf"  # Directly inserting the file path
+    regexp: 'AuthLDAPBindPassword ".*"'
+    replace: 'AuthLDAPBindPassword "{{ ldap_secret_output.secret_string }}"'
+
 - name: Download Jenkins CLI jar
   get_url:
     url: "{{ jenkins_url }}/jnlpJars/jenkins-cli.jar"
@@ -29,10 +93,6 @@
   shell: java -jar /tmp/jenkins-cli.jar -s {{ jenkins_url }} -auth {{ jenkins_user }}:{{ jenkins_password }} install-plugin {{ item }}
   with_items:
     - git
-    - ansible-tower
-    - ansicolor
-    - ant
-    - artifactory
   register: install_plugins
 
 - name: Restart Jenkins
