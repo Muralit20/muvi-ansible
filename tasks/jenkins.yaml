@@ -57,7 +57,7 @@
   check_mode: no
 
 - name: Retrieve the jenkins secret value from AWS Secrets Manager
-  community.aws.secretsmanager_secret_info:
+  community.aws.aws_secret:
     arns:
       - "arn:aws:secretsmanager:us-east-1:182510612431:secret:JENKINS_HTTPS_KEYSTORE_PASSWORD-Q2uByW"
     region: "us-east-1"
@@ -76,7 +76,7 @@
   notify: Restart Jenkins
 
 - name: Retrieve the LDAP secret value from AWS Secrets Manager
-  community.aws.secretsmanager_secret_info:
+  community.aws.aws_secret:
     arns:
       - "arn:aws:secretsmanager:us-east-1:182510612431:secret:AuthLDAPBindPassword-j05QvD"
     region: "us-east-1"
