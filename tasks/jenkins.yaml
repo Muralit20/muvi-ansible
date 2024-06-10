@@ -57,38 +57,32 @@
   check_mode: no
 
 - name: Retrieve the jenkins secret value from AWS Secrets Manager
-  community.aws.aws_secret:
-    arns:
-      - "arn:aws:secretsmanager:us-east-1:182510612431:secret:JENKINS_HTTPS_KEYSTORE_PASSWORD-Q2uByW"
-    region: "us-east-1"
-  register: jenkins_secret_output
+  set_fact:
+    jenkins_secret: "{{ lookup('amazon.aws.aws_secret', 'JENKINS_HTTPS_KEYSTORE_PASSWORD-Q2uByW', region='us-east-1') }}"
 
 - name: Ensure Jenkins secret was retrieved successfully
   fail:
     msg: "Failed to retrieve the Jenkins secret"
-  when: jenkins_secret_output.secrets[0].SecretString is not defined
+  when: jenkins_secret is not defined or jenkins_secret == ''
 
 - name: Update Jenkins service file with the secret value
   ansible.builtin.replace:
     path: "/usr/lib/systemd/system/jenkins.service"
     regexp: 'Environment="JENKINS_HTTPS_KEYSTORE_PASSWORD=.*"'
-    replace: 'Environment="JENKINS_HTTPS_KEYSTORE_PASSWORD={{ jenkins_secret_output.secrets[0].SecretString }}"'
+    replace: 'Environment="JENKINS_HTTPS_KEYSTORE_PASSWORD={{ jenkins_secret }}"'
   notify: Restart Jenkins
 
 - name: Retrieve the LDAP secret value from AWS Secrets Manager
-  community.aws.aws_secret:
-    arns:
-      - "arn:aws:secretsmanager:us-east-1:182510612431:secret:AuthLDAPBindPassword-j05QvD"
-    region: "us-east-1"
-  register: ldap_secret_output
+  set_fact:
+    ldap_secret: "{{ lookup('amazon.aws.aws_secret', 'AuthLDAPBindPassword-j05QvD', region='us-east-1') }}"
 
 - name: Ensure LDAP secret was retrieved successfully
   fail:
     msg: "Failed to retrieve the LDAP secret"
-  when: ldap_secret_output.secrets[0].SecretString is not defined
+  when: ldap_secret is not defined or ldap_secret == ''
 
 - name: Update SVN ViewVC HTTPD configuration file with the LDAP secret value
   ansible.builtin.replace:
     path: "/opt/csvn/data/conf/svn_viewvc_httpd.conf"
     regexp: 'AuthLDAPBindPassword ".*"'
-    replace: 'AuthLDAPBindPassword "{{ ldap_secret_output.secrets[0].SecretString }}"'
+    replace: 'AuthLDAPBindPassword "{{ ldap_secret }}"'
