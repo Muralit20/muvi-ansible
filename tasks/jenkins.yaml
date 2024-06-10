@@ -51,7 +51,7 @@
     src: files/conf/svn_viewvc_httpd.conf
     dest: /opt/csvn/data/conf/
 
-- name: Retrieve the secret value from AWS Secrets Manager
+- name: Retrieve the secret value from jenkins AWS Secrets Manager
   community.aws.aws_secret:
     secret_id: "arn:aws:secretsmanager:us-east-1:182510612431:secret:JENKINS_HTTPS_KEYSTORE_PASSWORD-Q2uByW"
   register: secret_output
@@ -67,7 +67,7 @@
     replace: 'Environment="JENKINS_HTTPS_KEYSTORE_PASSWORD={{ secret_output.secret_string | default('') }}"'
   notify: Restart Jenkins
 
-- name: Retrieve the secret value from AWS Secrets Manager
+- name: Retrieve the secret value from ldap AWS Secrets Manager
   community.aws.aws_secret:
     secret_id: "arn:aws:secretsmanager:us-east-1:182510612431:secret:AuthLDAPBindPassword-j05QvD"
   register: ldap_secret_output
