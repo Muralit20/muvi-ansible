@@ -51,11 +51,12 @@
     src: files/conf/svn_viewvc_httpd.conf
     dest: /opt/csvn/data/conf/
 
-- name: Retrieve the secret value from jenkins AWS Secrets Manager
+- name: Retrieve the jenkins secret value from AWS Secrets Manager
   community.aws.aws_secret:
     name: "JENKINS_HTTPS_KEYSTORE_PASSWORD-Q2uByW"  # Use the actual secret name or part of it from ARN
     region: "us-east-1"
   register: secret_output
+  failed_when: secret_output.secret_string is not defined
 
 - name: Ensure secret was retrieved successfully
   debug:
@@ -68,11 +69,12 @@
     replace: 'Environment="JENKINS_HTTPS_KEYSTORE_PASSWORD={{ secret_output.secret_string }}"'
   notify: Restart Jenkins
 
-- name: Retrieve the secret value from Ldap AWS Secrets Manager
+- name: Retrieve the LDAP secret value from AWS Secrets Manager
   community.aws.aws_secret:
-    name: "secret:AuthLDAPBindPassword-j05QvD"  # Use the actual secret name or part of it from ARN
+    name: "AuthLDAPBindPassword-j05QvD"  # Use the actual secret name or part of it from ARN
     region: "us-east-1"
   register: ldap_secret_output
+  failed_when: ldap_secret_output.secret_string is not defined
 
 - name: Ensure LDAP secret was retrieved successfully
   debug:
