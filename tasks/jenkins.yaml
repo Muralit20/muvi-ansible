@@ -69,7 +69,7 @@
   notify: Restart Jenkins
 
 - name: Retrieve the AuthLDAPBindPassword secret value from AWS Secrets Manager
-  amazon.aws.aws_secret:
+  community.aws.aws_secret:
     name: "AuthLDAPBindPassword"  # Secret name for AuthLDAPBindPassword
     region: "us-east-1"           # Directly inserting the AWS region
   register: ldap_secret_output
