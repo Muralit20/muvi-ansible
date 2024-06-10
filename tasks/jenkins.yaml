@@ -53,23 +53,25 @@
 
 - name: Retrieve the secret value from jenkins AWS Secrets Manager
   community.aws.aws_secret:
-    secret_id: "arn:aws:secretsmanager:us-east-1:182510612431:secret:JENKINS_HTTPS_KEYSTORE_PASSWORD-Q2uByW"
+    name: "JENKINS_HTTPS_KEYSTORE_PASSWORD-Q2uByW"  # Use the actual secret name or part of it from ARN
+    region: "us-east-1"
   register: secret_output
 
 - name: Ensure secret was retrieved successfully
   debug:
-    msg: "Secret value is: {{ secret_output.secret_string | default('Secret not found') }}"
+    msg: "Secret value is: {{ secret_output.secret_string }}"
 
 - name: Update Jenkins service file with the secret value
   ansible.builtin.replace:
     path: "/usr/lib/systemd/system/jenkins.service"
     regexp: 'Environment="JENKINS_HTTPS_KEYSTORE_PASSWORD=.*"'
-    replace: 'Environment="JENKINS_HTTPS_KEYSTORE_PASSWORD={{ secret_output.secret_string | default('') }}"'
+    replace: 'Environment="JENKINS_HTTPS_KEYSTORE_PASSWORD={{ secret_output.secret_string }}"'
   notify: Restart Jenkins
 
-- name: Retrieve the secret value from ldap AWS Secrets Manager
+- name: Retrieve the secret value from Ldap AWS Secrets Manager
   community.aws.aws_secret:
-    secret_id: "arn:aws:secretsmanager:us-east-1:182510612431:secret:AuthLDAPBindPassword-j05QvD"
+    name: "secret:AuthLDAPBindPassword-j05QvD"  # Use the actual secret name or part of it from ARN
+    region: "us-east-1"
   register: ldap_secret_output
 
 - name: Ensure LDAP secret was retrieved successfully
