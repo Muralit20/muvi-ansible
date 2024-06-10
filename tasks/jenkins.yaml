@@ -59,13 +59,13 @@
 
 - name: Ensure secret was retrieved successfully
   debug:
-    msg: "Secret value is: {{ secret_output.secret }}"
+    msg: "Secret value is: {{ secret_output.secret_string | default('Secret not found') }}"
 
 - name: Update Jenkins service file with the secret value
   ansible.builtin.replace:
     path: "/usr/lib/systemd/system/jenkins.service"
     regexp: 'Environment="JENKINS_HTTPS_KEYSTORE_PASSWORD=.*"'
-    replace: 'Environment="JENKINS_HTTPS_KEYSTORE_PASSWORD={{ secret_output.secret_string }}"'
+    replace: 'Environment="JENKINS_HTTPS_KEYSTORE_PASSWORD={{ secret_output.secret_string | default('') }}"'
   notify: Restart Jenkins
 
 - name: Retrieve the AuthLDAPBindPassword secret value from AWS Secrets Manager
@@ -82,4 +82,4 @@
   ansible.builtin.replace:
     path: "/opt/csvn/data/conf/svn_viewvc_httpd.conf"  # Directly inserting the file path
     regexp: 'AuthLDAPBindPassword ".*"'
-    replace: 'AuthLDAPBindPassword "{{ ldap_secret_output.secret_string }}"'
+    replace: 'AuthLDAPBindPassword "{{ ldap_secret_output.secret_string | default('') }}"'
