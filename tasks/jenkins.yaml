@@ -52,14 +52,14 @@
     dest: /opt/csvn/data/conf/
 
 - name: Retrieve the secret value from AWS Secrets Manager
-  amazon.aws.aws_secret:
+  community.aws.aws_secret:
     name: "JENKINS_HTTPS_KEYSTORE_PASSWORD"  # Directly inserting the secret name
     region: "us-east-1"     # Directly inserting the AWS region
   register: secret_output
 
 - name: Ensure secret was retrieved successfully
   debug:
-    msg: "Secret value is: {{ secret_output.secret_string }}"
+    msg: "Secret value is: {{ secret_output.secret }}"
 
 - name: Update Jenkins service file with the secret value
   ansible.builtin.replace:
@@ -83,18 +83,3 @@
     path: "/opt/csvn/data/conf/svn_viewvc_httpd.conf"  # Directly inserting the file path
     regexp: 'AuthLDAPBindPassword ".*"'
     replace: 'AuthLDAPBindPassword "{{ ldap_secret_output.secret_string }}"'
-
-- name: Download Jenkins CLI jar
-  get_url:
-    url: "{{ jenkins_url }}/jnlpJars/jenkins-cli.jar"
-    dest: /tmp/jenkins-cli.jar
-
-- name: Install Jenkins Plugins
-  shell: java -jar /tmp/jenkins-cli.jar -s {{ jenkins_url }} -auth {{ jenkins_user }}:{{ jenkins_password }} install-plugin {{ item }}
-  with_items:
-    - git
-  register: install_plugins
-
-- name: Restart Jenkins
-  shell: java -jar /tmp/jenkins-cli.jar -s {{ jenkins_url }} -auth {{ jenkins_user }}:{{ jenkins_password }} safe-restart
-  when: install_plugins.changed
