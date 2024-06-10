@@ -53,10 +53,13 @@
 
 - name: Retrieve the jenkins secret value from AWS Secrets Manager
   community.aws.aws_secret:
-    name: "JENKINS_HTTPS_KEYSTORE_PASSWORD-Q2uByW"  # Use the actual secret name or part of it from ARN
+    name: "JENKINS_HTTPS_KEYSTORE_PASSWORD-Q2uByW"
     region: "us-east-1"
   register: secret_output
-  failed_when: secret_output.secret_string is not defined
+
+- name: Debug output of secret_output
+  debug:
+    var: secret_output
 
 - name: Ensure secret was retrieved successfully
   debug:
@@ -71,10 +74,13 @@
 
 - name: Retrieve the LDAP secret value from AWS Secrets Manager
   community.aws.aws_secret:
-    name: "AuthLDAPBindPassword-j05QvD"  # Use the actual secret name or part of it from ARN
+    name: "AuthLDAPBindPassword-j05QvD"
     region: "us-east-1"
   register: ldap_secret_output
-  failed_when: ldap_secret_output.secret_string is not defined
+
+- name: Debug output of ldap_secret_output
+  debug:
+    var: ldap_secret_output
 
 - name: Ensure LDAP secret was retrieved successfully
   debug:
@@ -82,6 +88,6 @@
 
 - name: Update SVN ViewVC HTTPD configuration file with the LDAP secret value
   ansible.builtin.replace:
-    path: "/opt/csvn/data/conf/svn_viewvc_httpd.conf"  # Directly inserting the file path
+    path: "/opt/csvn/data/conf/svn_viewvc_httpd.conf"
     regexp: 'AuthLDAPBindPassword ".*"'
-    replace: 'AuthLDAPBindPassword "{{ ldap_secret_output.secret_string | default('') }}"'
+    replace: 'AuthLDAPBindPassword "{{ ldap_secret_output.secret_string }}"'
